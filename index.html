@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Günün Sorusu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .date {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease;
+        }
+
+        .question {
+            font-size: 1.3em;
+            color: #333;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+            animation: pulse 0.5s ease;
+        }
+
+        .option.wrong {
+            border-color: #f44336;
+            background: #ffebee;
+            animation: shake 0.5s ease;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .result.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-10px);
+            }
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .question {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confetti"></canvas>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Günün Sorusu</h1>
+            <p class="date" id="today-date"></p>
+        </div>
+
+        <div class="question-box">
+            <p class="question" id="question">Türkiye'nin başkenti neresidir?</p>
+        </div>
+
+        <div class="options" id="options">
+            <div class="option" data-answer="wrong">İstanbul</div>
+            <div class="option" data-answer="correct">Ankara</div>
+            <div class="option" data-answer="wrong">İzmir</div>
+            <div class="option" data-answer="wrong">Bursa</div>
+        </div>
+
+        <button class="submit-btn" id="submit-btn" disabled>Cevapla</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        // Bugünün tarihini göster
+        const today = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('today-date').textContent = today.toLocaleDateString('tr-TR', options);
+
+        // Seçenekleri yönet
+        const optionElements = document.querySelectorAll('.option');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultDiv = document.getElementById('result');
+        let selectedOption = null;
+        let answered = false;
+
+        optionElements.forEach(option => {
+            option.addEventListener('click', () => {
+                if (answered) return;
+                
+                optionElements.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedOption = option;
+                submitBtn.disabled = false;
+            });
+        });
+
+        submitBtn.addEventListener('click', () => {
+            if (!selectedOption || answered) return;
+            
+            answered = true;
+            submitBtn.disabled = true;
+
+            const isCorrect = selectedOption.dataset.answer === 'correct';
+
+            if (isCorrect) {
+                selectedOption.classList.add('correct');
+                resultDiv.className = 'result show success';
+                resultDiv.textContent = '🎉 Tebrikler! Doğru cevap!';
+                launchConfetti();
+            } else {
+                selectedOption.classList.add('wrong');
+                optionElements.forEach(opt => {
+                    if (opt.dataset.answer === 'correct') {
+                        opt.classList.add('correct');
+                    }
+                });
+                resultDiv.className = 'result show error';
+                resultDiv.textContent = '😔 Maalesef yanlış. Doğru cevap işaretlendi.';
+            }
+
+            // 3 saniye sonra yenile butonu göster
+            setTimeout(() => {
+                submitBtn.textContent = '🔄 Yeni Soru';
+                submitBtn.disabled = false;
+                submitBtn.onclick = () => location.reload();
+            }, 3000);
+        });
+
+        // Konfeti animasyonu
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const confettiCount = 150;
+            const confetti = [];
+
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+
+            for (let i = 0; i < confettiCount; i++) {
+                confetti.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    r: Math.random() * 6 + 4,
+                    d: Math.random() * confettiCount,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10 - 10,
+                    tiltAngleIncremental: Math.random() * 0.07 + 0.05,
+                    tiltAngle: 0
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                confetti.forEach((c, i) => {
+                    ctx.beginPath();
+                    ctx.lineWidth = c.r / 2;
+                    ctx.strokeStyle = c.color;
+                    ctx.moveTo(c.x + c.tilt + c.r, c.y);
+                    ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r);
+                    ctx.stroke();
+
+                    c.tiltAngle += c.tiltAngleIncremental;
+                    c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
+                    c.x += Math.sin(c.d);
+                    c.tilt = Math.sin(c.tiltAngle - i / 3) * 15;
+
+                    if (c.y > canvas.height) {
+                        confetti.splice(i, 1);
+                    }
+                });
+
+                if (confetti.length > 0) {
+                    requestAnimationFrame(draw);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            draw();
+        }
+
+        // Pencere boyutu değiştiğinde canvas'ı güncelle
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('confetti');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
